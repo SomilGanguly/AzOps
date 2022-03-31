@@ -1,7 +1,18 @@
+$context = Get-AzContext
+$context.Subscription.Id = "eeb60d7a-bd88-4f37-ba87-195374cdbf2a"
+$odataFilter = "`$filter=subscriptionId eq 'eeb60d7a-bd88-4f37-ba87-195374cdbf2a'"
+$parameters = @{
+    DefaultProfile = $Context | Select-Object -First 1
+    ODataQuery     = $odataFilter
+}
+    $parameters.ResourceGroupName = "biceptest"
+    $resourceGroup.ResourceGroupName = "biceptest"
+$resources=Get-AzResource @parameters -ExpandProperties -ErrorAction Stop
+
 foreach ($resource in ($resources )) {
     $exportParameters = @{
         Resource                = $resource.ResourceId
-        ResourceGroupName       = $resourceGroup.ResourceGroupName
+        ResourceGroupName       = "biceptest"
         SkipAllParameterization = $true
         Path                    = $tempExportPath
         DefaultProfile          = $Context | Select-Object -First 1
@@ -9,12 +20,7 @@ foreach ($resource in ($resources )) {
     Export-AzResourceGroup @exportParameters -Confirm:$false -Force | Out-Null
     $exportResources = (Get-Content -Path $tempExportPath | ConvertFrom-Json).resources
     foreach ($exportResource in ($exportResources)) {
-            Write-PSFMessage -Level Verbose @msgCommon -String 'Get-AzOpsResourceDefinition.Subscription.Processing.ChildResource' -StringValues $exportResource.Name, $resourceGroup.ResourceGroupName -Target $exportResource
-            $ChildResource = @{
-                resourceProvider = $exportResource.type -replace '/', '_'
-                resourceName     = $exportResource.name -replace '/', '_'
-                parentResourceId = $resourceGroup.ResourceId
-            }
+            
             if (Get-Member -InputObject $exportResource -name 'dependsOn') {
                 $exportResource.PsObject.Members.Remove('dependsOn')
             }
