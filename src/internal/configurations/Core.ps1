@@ -22,3 +22,4 @@ Set-PSFConfig -Module AzOps -Name Core.SubscriptionsToIncludeResourceGroups -Val
 Set-PSFConfig -Module AzOps -Name Core.TemplateParameterFileSuffix -Value '.json' -Initialize -Validation string -Description 'parameter file suffix to look for'
 Set-PSFConfig -Module AzOps -Name Core.ThrottleLimit -Value 10 -Initialize -Validation integer -Description 'Throttle limit used in Foreach-Object -Parallel for resource/subscription discovery'
 Set-PSFConfig -Module AzOps -Name Core.WhatifExcludedChangeTypes -Value @('NoChange','Ignore') -Initialize -Validation stringarray -Description 'Exclude specific change types from WhatIf operations.'
+Set-PSFConfig -Module AzOps -Name Core.BicepConversion -Value $false -Initialize -Validation bool -Description 'Flag to convert to bicep file'

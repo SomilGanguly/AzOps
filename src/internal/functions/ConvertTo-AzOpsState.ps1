@@ -51,6 +51,9 @@
         [switch]
         $ReturnObject,
 
+        [switch]
+        $BicepConversion = (Get-PSFConfigValue -FullName 'AzOps.Core.BicepConversion'),
+
         [hashtable]
         $ChildResource,
 
@@ -80,8 +83,18 @@
             $object = ($Resource | ConvertTo-Json -Depth 100 -EnumsAsStrings | jq -r -f $jqJsonTemplate | ConvertFrom-Json)
 
             Write-PSFMessage -Level Verbose -String 'ConvertTo-AzOpsState.Subscription.ChildResource.Exporting' -StringValues $objectFilePath
-            ConvertTo-Json -InputObject $object -Depth 100 -EnumsAsStrings | Set-Content -Path $objectFilePath -Encoding UTF8 -Force
-            return
+            if($BicepConversion) {
+                ConvertTo-Json -InputObject $object -Depth 100 -EnumsAsStrings | Set-Content -Path $objectFilePath -Encoding UTF8 -Force
+                bicep decompile ([WildcardPattern]::Escape($objectFilePath)) 2>nul
+                if(Test-Path -Path $objectFilePath) {
+                    Remove-Item -Path $objectFilePath
+                }
+                return
+            }
+            else {
+                ConvertTo-Json -InputObject $object -Depth 100 -EnumsAsStrings | Set-Content -Path $objectFilePath -Encoding UTF8 -Force
+                return
+            }
         }
 
         if (-not $ExportPath) {
@@ -245,14 +258,34 @@
 
                 }
                 Write-PSFMessage -Level Verbose -String 'ConvertTo-AzOpsState.Exporting' -StringValues $objectFilePath -FunctionName 'ConvertTo-AzOpsState'
+                if($BicepConversion) {
+                    ConvertTo-Json -InputObject $object -Depth 100 -EnumsAsStrings | Set-Content -Path ([WildcardPattern]::Escape($objectFilePath)) -Encoding UTF8 -Force
+                    bicep decompile ([WildcardPattern]::Escape($objectFilePath)) 2>nul
+                    if(Test-Path -Path $objectFilePath) {
+                        Remove-Item -Path $objectFilePath
+                    }
+                    return
+                }
+                else {
                 ConvertTo-Json -InputObject $object -Depth 100 -EnumsAsStrings | Set-Content -Path ([WildcardPattern]::Escape($objectFilePath)) -Encoding UTF8 -Force
+                }
             }
         }
         else {
             Write-PSFMessage -Level Verbose -String 'ConvertTo-AzOpsState.Exporting.Default' -StringValues $objectFilePath -FunctionName 'ConvertTo-AzOpsState'
             if ($ReturnObject) { return $Resource }
             else {
-                ConvertTo-Json -InputObject $Resource -Depth 100 -EnumsAsStrings | Set-Content -Path ([WildcardPattern]::Escape($objectFilePath)) -Encoding UTF8 -Force
+                if($BicepConversion) {
+                    ConvertTo-Json -InputObject $Resource -Depth 100 -EnumsAsStrings | Set-Content -Path ([WildcardPattern]::Escape($objectFilePath)) -Encoding UTF8 -Force
+                    bicep decompile ([WildcardPattern]::Escape($objectFilePath)) 2>nul
+                    if(Test-Path -Path $objectFilePath) {
+                        Remove-Item -Path $objectFilePath
+                    }
+                    return
+                }
+                else {
+                    ConvertTo-Json -InputObject $Resource -Depth 100 -EnumsAsStrings | Set-Content -Path ([WildcardPattern]::Escape($objectFilePath)) -Encoding UTF8 -Force
+                }
             }
         }
     }
